@@ -1,6 +1,4 @@
-# ==========================================
-# 🌿 EasyLiving ML API - Mood Prediction Only
-# ==========================================
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,9 +6,7 @@ import joblib
 import pandas as pd
 import numpy as np
 
-# ==========================================
-# 🌿 FastAPI Setup
-# ==========================================
+
 app = FastAPI(
     title="EasyLiving ML API",
     version="1.0",
@@ -25,9 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==========================================
-# 🧠 Load Mood Model
-# ==========================================
+
 try:
     mood_model = joblib.load("models/final_mood_model.pkl")
     print("✅ Mood model loaded successfully")
@@ -36,9 +30,6 @@ except Exception as e:
     mood_model = None
 
 
-# ==========================================
-# 📦 Input Schema
-# ==========================================
 class MoodInput(BaseModel):
     sleepHours: float
     screenTimeHours: float
@@ -47,24 +38,20 @@ class MoodInput(BaseModel):
     textInput: str
 
 
-# ==========================================
-# 🌍 Root Route
-# ==========================================
+
 @app.get("/")
 def home():
     return {"message": "🌿 EasyLiving ML API is running successfully!"}
 
 
-# ==========================================
-# 🔮 Mood Prediction Route
-# ==========================================
+
 @app.post("/predict/mood")
 def predict_mood(data: MoodInput):
     if mood_model is None:
         raise HTTPException(status_code=503, detail="Mood model not loaded")
 
     try:
-        # Prepare input dataframe
+
         df = pd.DataFrame([{
             "sleep_hours": data.sleepHours,
             "screen_time": data.screenTimeHours,
@@ -73,7 +60,7 @@ def predict_mood(data: MoodInput):
             "text_input": data.textInput
         }])
 
-        # Predict mood and confidence
+
         prediction = mood_model.predict(df)[0]
         probs = mood_model.predict_proba(df)
         confidence = float(np.max(probs))
@@ -118,9 +105,7 @@ def predict_mood(data: MoodInput):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
 
-# ==========================================
-# 🚀 Run App
-# ==========================================
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

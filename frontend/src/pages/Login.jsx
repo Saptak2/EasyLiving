@@ -30,7 +30,7 @@ export default function Login() {
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex justify-center items-center px-4">
             <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
                 <h2 className="text-3xl font-semibold text-center text-green-700 mb-2">
-                    Welcome Back 👋
+                    Welcome Back 
                 </h2>
                 <p className="text-center text-gray-500 mb-8">
                     Sign in to continue your wellness journey.

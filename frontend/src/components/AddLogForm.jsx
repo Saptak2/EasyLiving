@@ -125,7 +125,7 @@ export default function AddLogForm({
                     </>
                 )}
 
-                {/* 💰 Expense Log Section */}
+                {/* Expense Log Section */}
                 {formType === "expense" && (
                     <>
                         <div className="grid grid-cols-2 gap-4">
@@ -184,7 +184,7 @@ export default function AddLogForm({
                     </>
                 )}
 
-                {/* 🏃 Activity Log Section */}
+                {/*  Activity Log Section */}
                 {formType === "activity" && (
                     <>
                         <div>

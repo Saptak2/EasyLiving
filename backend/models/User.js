@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
         age: { type: Number, required: true },
-        gender: { type: Number, required: true }, // 0=Male, 1=Female, 2=Other
+        gender: { type: Number, required: true },
 
         // Lifestyle & Health
         daily_screen_time_hours: { type: Number, default: 0 },

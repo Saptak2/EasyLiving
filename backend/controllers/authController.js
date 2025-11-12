@@ -16,21 +16,21 @@ export const registerUser = async (req, res) => {
             family_member_count, email, password, emergency_contact
         } = req.body;
 
-        // ✅ Check if user already exists
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: "User already exists with this email" });
         }
 
-        // ✅ Hash password
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // ✅ Set flags automatically
+
         const has_email_registered = email ? 1 : 0;
         const has_emergency_contact = emergency_contact ? 1 : 0;
 
-        // ✅ Create user
+
         const user = await User.create({
             name, age, gender,
             daily_screen_time_hours, sleep_hours,
@@ -44,14 +44,12 @@ export const registerUser = async (req, res) => {
             has_email_registered, has_emergency_contact
         });
 
-        // ✅ Generate JWT token
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
 
-        // ✅ Send response
         res.status(201).json({
             message: "User registered successfully",
             user: {
@@ -65,7 +63,7 @@ export const registerUser = async (req, res) => {
 
     } catch (error) {
         console.error("🚨 Registration Detailed Error:");
-        console.error(JSON.stringify(error, null, 2));  // full error object
+        console.error(JSON.stringify(error, null, 2));
         res.status(500).json({
             message: "Server error",
             error: error.message || "Unknown error",
@@ -79,31 +77,31 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // ✅ Check required fields
+
         if (!email || !password) {
             return res.status(400).json({ message: "Please enter both email and password" });
         }
 
-        // ✅ Find user by email
+
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: "No account found with this email" });
         }
 
-        // ✅ Match password
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid password" });
         }
 
-        // ✅ Generate JWT Token
+
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
 
-        // ✅ Respond with token and user details
+
         res.status(200).json({
             message: "Login successful",
             user: {
@@ -123,11 +121,10 @@ export const loginUser = async (req, res) => {
     }
 };
 
-// ✅ Get Current User Profile
+
 export const getUserProfile = async (req, res) => {
     try {
-        // req.user is set by protect middleware
-        const user = await User.findById(req.user.id).select("-password"); // exclude password
+        const user = await User.findById(req.user.id).select("-password");
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });

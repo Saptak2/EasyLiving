@@ -15,7 +15,7 @@ export default function RecentLogs({ logs, removeLog }) {
                                 ? new Date(l.date).toISOString().split("T")[0]
                                 : "—";
 
-                        // 🌈 Color scheme by log type
+
                         const colorMap = {
                             mood: "bg-yellow-50 border-yellow-200",
                             expense: "bg-red-50 border-red-200",

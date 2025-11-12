@@ -5,7 +5,6 @@ import Profile from "./components/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-// ✅ ProtectedRoute ensures only logged-in users can access protected pages
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
@@ -15,11 +14,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -37,7 +34,6 @@ export default function App() {
           }
         />
 
-        {/* Redirect unknown routes */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

@@ -114,7 +114,7 @@ router.get("/weekly", protect, async (req, res) => {
 
 
 
-// ✅ Save latest recommendations (called after mood prediction)
+
 router.post("/save", (req, res) => {
     const { recommendations } = req.body;
 

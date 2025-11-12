@@ -10,15 +10,12 @@ import API from "../api/axiosConfig";
 export default function ElderlyWellnessDashboard() {
     const userId = localStorage.getItem("userId");
 
-    // 🔹 Data states
     const [logs, setLogs] = useState([]);
     const [stats, setStats] = useState(null);
     const [recommendations, setRecommendations] = useState([]);
 
-    // 🔹 Global form control
     const [formType, setFormType] = useState("mood");
 
-    // 🔹 Mood log states
     const [sleepHours, setSleepHours] = useState("");
     const [screenTime, setScreenTime] = useState("");
     const [exerciseMinutes, setExerciseMinutes] = useState("");
@@ -26,23 +23,19 @@ export default function ElderlyWellnessDashboard() {
     const [moodNote, setMoodNote] = useState("");
     const [predictedMood, setPredictedMood] = useState(null);
 
-    // 🔹 Expense log states
     const [foodExpense, setFoodExpense] = useState("");
     const [medicalExpense, setMedicalExpense] = useState("");
     const [transportExpense, setTransportExpense] = useState("");
     const [personalExpense, setPersonalExpense] = useState("");
 
-    // 🔹 Activity log states
     const [activityName, setActivityName] = useState("");
     const [durationMinutes, setDurationMinutes] = useState("");
     const [moodScore, setMoodScore] = useState("");
 
-    // 🔹 Trend Modal Controls
     const [openMoodTrend, setOpenMoodTrend] = useState(false);
     const [openExpenseTrend, setOpenExpenseTrend] = useState(false);
     const [openActivityTrend, setOpenActivityTrend] = useState(false);
 
-    // 🔹 Authentication check
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -55,7 +48,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }, []);
 
-    // 🧾 Fetch all logs
     async function fetchLogs() {
         try {
             const res = await API.get("/api/logs/all");
@@ -65,7 +57,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }
 
-    // 🧮 Fetch weekly insights
     async function fetchStats() {
         try {
             const res = await API.get("/api/insights/weekly");
@@ -75,7 +66,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }
 
-    // 💡 Fetch recommendations
     async function fetchRecommendations() {
         try {
             const res = await API.get("/api/insights/recommendations");
@@ -85,7 +75,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }
 
-    // 🗑 Remove a log
     async function removeLog(id) {
         try {
             await API.delete(`/api/logs/${id}`);
@@ -95,7 +84,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }
 
-    // 🔄 Reset form fields
     function resetForm() {
         setSleepHours("");
         setScreenTime("");
@@ -111,7 +99,6 @@ export default function ElderlyWellnessDashboard() {
         setMoodScore("");
     }
 
-    // ➕ Add new log
     async function addLog(e) {
         e.preventDefault();
         try {
@@ -170,7 +157,6 @@ export default function ElderlyWellnessDashboard() {
         }
     }
 
-    // 🧠 Render
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
@@ -186,7 +172,6 @@ export default function ElderlyWellnessDashboard() {
                         </p>
                     </header>
 
-                    {/* 🔹 Stats Cards with Trend Buttons */}
                     <StatsCards
                         stats={stats}
                         predictedMood={predictedMood}
@@ -195,7 +180,6 @@ export default function ElderlyWellnessDashboard() {
                         onOpenActivityTrend={() => setOpenActivityTrend(true)}
                     />
 
-                    {/* 🔹 Trend Modals */}
                     <TrendsModal
                         open={openMoodTrend}
                         onClose={() => setOpenMoodTrend(false)}
@@ -212,7 +196,6 @@ export default function ElderlyWellnessDashboard() {
                         type="activity"
                     />
 
-                    {/* 🔹 Logs + Recommendations */}
                     <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                         <AddLogForm
                             formType={formType}

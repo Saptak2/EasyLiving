@@ -6,7 +6,6 @@ export default function Navbar() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
 
-    // Fetch logged-in user profile
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -32,7 +31,7 @@ export default function Navbar() {
                 onClick={() => navigate("/dashboard")}
                 className="text-2xl font-semibold text-green-700 cursor-pointer"
             >
-                🌿 Wellness Support
+                🌿EasyLiving- Wellness Support
             </div>
 
             <div className="flex items-center gap-4">
