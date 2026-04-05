@@ -3,8 +3,19 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
-        age: { type: Number, required: true },
-        gender: { type: Number, required: true },
+        age: {
+            type: Number,
+            required: function () {
+                return this.role === "elderly";
+            }
+        },
+
+        gender: {
+            type: Number,
+            required: function () {
+                return this.role === "elderly";
+            }
+        },
 
         // Lifestyle & Health
         daily_screen_time_hours: { type: Number, default: 0 },
@@ -33,7 +44,21 @@ const userSchema = new mongoose.Schema(
         emergency_contact: { type: String, default: "" },
         has_email_registered: { type: Number, default: 1 },
         has_emergency_contact: { type: Number, default: 0 },
+        // 🔥 Role: elderly or caretaker
+        role: {
+            type: String,
+            enum: ["elderly", "caretaker"],
+            default: "elderly"
+        },
+
+        // 🔥 Link elderly to caretaker
+        caretakerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
     },
+
     { timestamps: true }
 );
 

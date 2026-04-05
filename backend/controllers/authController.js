@@ -73,6 +73,35 @@ export const registerUser = async (req, res) => {
 
 };
 
+export const registerCaretaker = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        const existing = await User.findOne({ email });
+        if (existing) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            role: "caretaker"
+        });
+
+        res.status(201).json({
+            message: "Caretaker registered successfully"
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -108,6 +137,7 @@ export const loginUser = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                role: user.role,
                 has_emergency_contact: user.has_emergency_contact,
                 age: user.age,
                 gender: user.gender
