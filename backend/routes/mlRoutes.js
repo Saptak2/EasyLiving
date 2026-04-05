@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import { protect } from "../middleware/authMiddleware.js";
 import MoodLog from "../models/MoodLog.js";
+import { generateAlerts } from "../utils/alertService.js";
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post("/predict/mood", protect, async (req, res) => {
       predictedMood: predicted_mood,
       modelConfidence: confidence || null,
     });
+    await generateAlerts(req.user._id);
 
     // ✅ Return full response to frontend
     res.status(200).json(response.data);

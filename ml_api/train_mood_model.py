@@ -34,7 +34,8 @@ df_txt = df_txt.rename(columns={"text": "text_input"})[["text_input", "mood"]]
 
 
 df_num["mood"] = df_num["mood"].str.title()
-df_num["text_input"] = ""
+# df_num["text_input"] = ""
+df_num["text_input"] = df_num["mood"]
 
 
 for col in ["sleep_hours", "screen_time", "exercise_minutes", "caffeine_mg"]:
@@ -58,8 +59,15 @@ numeric_pipeline = Pipeline([
     ("scaler", StandardScaler())
 ])
 
+# text_pipeline = Pipeline([
+#     ("tfidf", TfidfVectorizer(min_df=2, ngram_range=(1, 2)))
+# ])
 text_pipeline = Pipeline([
-    ("tfidf", TfidfVectorizer(min_df=2, ngram_range=(1, 2)))
+    ("tfidf", TfidfVectorizer(
+        min_df=1,
+        ngram_range=(1, 3),
+        max_features=5000
+    ))
 ])
 
 preprocessor = ColumnTransformer([

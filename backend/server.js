@@ -7,6 +7,7 @@ import logRoutes from "./routes/logRoutes.js";
 import mlRoutes from "./routes/mlRoutes.js";
 import insightRoutes from "./routes/insightRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import alertRoutes from "./routes/alertRoutes.js";
 
 
 
@@ -25,7 +26,7 @@ app.use("/api/logs", logRoutes);
 app.use("/api/ml", mlRoutes);
 app.use("/api/insights", insightRoutes);
 app.use("/api/user", userRoutes);
-
+app.use("/api/alerts", alertRoutes);
 
 
 const PORT = process.env.PORT || 5000;

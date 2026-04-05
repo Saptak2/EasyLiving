@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import joblib
 import pandas as pd
 import numpy as np
+import random
 
 
 app = FastAPI(
@@ -51,13 +52,20 @@ def predict_mood(data: MoodInput):
         raise HTTPException(status_code=503, detail="Mood model not loaded")
 
     try:
+        text = data.textInput.lower()
+
+        # 🔥 handle negation
+        if "not" in text:
+            text = text.replace("not good", "bad")
+            text = text.replace("not happy", "sad")
+            text = text.replace("not feeling good", "sad")
 
         df = pd.DataFrame([{
             "sleep_hours": data.sleepHours,
             "screen_time": data.screenTimeHours,
             "exercise_minutes": data.exerciseMinutes,
             "caffeine_mg": data.caffeineMg,
-            "text_input": data.textInput
+            "text_input": text
         }])
 
 
@@ -69,29 +77,50 @@ def predict_mood(data: MoodInput):
 
         # Generate recommendations
         if mood.lower() == "happy":
-            recs = [
-                "🎉 Keep doing what makes you happy!",
-                "💪 Stay active and share positivity with others.",
-                "🌿 Journal your positive thoughts daily."
+            all_recs = [
+            "🎉 Keep doing what makes you happy!",
+            "💪 Stay active and share positivity with others.",
+            "🌿 Journal your positive thoughts daily.",
+            "😊 Help someone today.",
+            "🎯 Set a small goal and achieve it.",
+            "📸 Capture a happy moment today."
             ]
+
+            recs = random.sample(all_recs, 3)
         elif mood.lower() == "neutral":
-            recs = [
-                "🌞 Keep a steady routine of sleep and exercise.",
-                "📚 Try mindfulness or a hobby you enjoy.",
-                "☕ Watch caffeine and screen time balance."
+            all_recs = [
+            "🌞 Keep a steady routine of sleep and exercise.",
+            "📚 Try mindfulness or a hobby you enjoy.",
+            "☕ Watch caffeine and screen time balance.",
+            "🚶 Take a short walk to refresh your mind.",
+            "🎧 Listen to something relaxing.",
+            "🧘 Practice light stretching."
             ]
+
+            recs = random.sample(all_recs, 3)
         elif mood.lower() == "sad":
-            recs = [
+            all_recs = [
                 "💖 Go for a relaxing walk or call a friend.",
                 "🧘 Try 10 mins of meditation or deep breathing.",
-                "🌿 Track habits regularly — small steps matter."
+                "🌿 Track habits regularly — small steps matter.",
+                "📞 Talk to someone you trust.",
+                "🎵 Listen to calming music.",
+                "🚶 Take a short walk outside.",
+                "📝 Write down your feelings in a journal."
             ]
+
+            recs = random.sample(all_recs, 3)
         elif mood.lower() == "stressed":
-            recs = [
+            all_recs = [
                 "😌 Take short breaks to relax your mind.",
                 "🎧 Listen to calming music or nature sounds.",
-                "🕯️ Try gentle yoga or a warm bath before bed."
+                "🕯️ Try gentle yoga or a warm bath before bed.",
+                "🌿 Practice deep breathing for 5 minutes.",
+                "📵 Reduce screen time for a while.",
+                "☕ Avoid too much caffeine today."
             ]
+
+            recs = random.sample(all_recs, 3)
         else:
             recs = ["🌈 Stay mindful and keep tracking your moods daily."]
 

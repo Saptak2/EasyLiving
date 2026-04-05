@@ -1,6 +1,7 @@
 import MoodLog from "../models/MoodLog.js";
 import ExpenseLog from "../models/ExpenseLog.js";
 import ActivityLog from "../models/ActivityLog.js";
+import { generateAlerts } from "../utils/alertService.js";
 
 // ---- MOOD LOG ----
 export const addMoodLog = async (req, res) => {
