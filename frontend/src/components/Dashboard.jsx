@@ -35,6 +35,7 @@ export default function ElderlyWellnessDashboard() {
     const [openMoodTrend, setOpenMoodTrend] = useState(false);
     const [openExpenseTrend, setOpenExpenseTrend] = useState(false);
     const [openActivityTrend, setOpenActivityTrend] = useState(false);
+    const [hasLoggedToday, setHasLoggedToday] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -120,10 +121,11 @@ export default function ElderlyWellnessDashboard() {
                 setPredictedMood(predicted);
 
                 if (res.data.recommendations && res.data.recommendations.length > 0) {
-                    setRecommendations((prev) => [...prev, ...res.data.recommendations]);
+                    setRecommendations(res.data.recommendations || []);
                 }
 
                 alert(`✅ Mood log added! Predicted mood: ${predicted}`);
+                setHasLoggedToday(true);
                 await fetchStats();
             }
             else if (formType === "expense") {
@@ -153,7 +155,14 @@ export default function ElderlyWellnessDashboard() {
             resetForm();
         } catch (err) {
             console.error("❌ Error adding log:", err);
-            alert("Failed to add log. Please check your inputs.");
+
+            const msg = err.response?.data?.message;
+
+            if (msg) {
+                alert(msg);   // ✅ show real backend message
+            } else {
+                alert("Failed to add log. Please try again.");
+            }
         }
     }
 
@@ -225,6 +234,7 @@ export default function ElderlyWellnessDashboard() {
                             moodScore={moodScore}
                             setMoodScore={setMoodScore}
                             addLog={addLog}
+                            hasLoggedToday={hasLoggedToday}
                         />
 
                         <div className="space-y-6">

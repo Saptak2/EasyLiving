@@ -13,7 +13,7 @@ export default function AddLogForm({
     personalExpense, setPersonalExpense,
     activityName, setActivityName,
     durationMinutes, setDurationMinutes,
-    moodScore, setMoodScore, addLog
+    moodScore, setMoodScore, addLog, hasLoggedToday
 }) {
 
     return (
@@ -244,13 +244,24 @@ export default function AddLogForm({
                         </div>
                     </>
                 )}
+                {formType === "mood" && hasLoggedToday && (
+                    <p className="text-sm text-red-500">
+                        You have already logged your mood today
+                    </p>
+                )}
 
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    className="bg-green-600 text-white w-full py-2 rounded-md hover:bg-green-700 transition"
+                    disabled={formType === "mood" && hasLoggedToday}
+                    className={`w-full py-2 rounded-md transition ${formType === "mood" && hasLoggedToday
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-600 text-white hover:bg-green-700"
+                        }`}
                 >
-                    Add Log
+                    {formType === "mood" && hasLoggedToday
+                        ? "Already Logged Today"
+                        : "Add Log"}
                 </button>
             </form>
         </div>

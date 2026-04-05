@@ -7,16 +7,46 @@ import { generateAlerts } from "../utils/alertService.js";
 export const addMoodLog = async (req, res) => {
     try {
         const userId = req.user.id;
+
+        // 🔥 CHECK DAILY LIMIT
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const existingLog = await MoodLog.findOne({
+            userId,
+            createdAt: { $gte: startOfDay }
+        });
+
+        if (existingLog) {
+            return res.status(400).json({
+                message: "You have already logged your mood today"
+            });
+        }
+
         const { moodNote, sleepHours, screenTimeHours, exerciseMinutes, caffeineMg } = req.body;
 
         const log = new MoodLog({
-            userId, moodNote, sleepHours, screenTimeHours, exerciseMinutes, caffeineMg
+            userId,
+            moodNote,
+            sleepHours,
+            screenTimeHours,
+            exerciseMinutes,
+            caffeineMg
         });
+
         await log.save();
-        res.status(201).json({ message: "Mood log added successfully", log });
+
+        res.status(201).json({
+            message: "Mood log added successfully",
+            log
+        });
+
     } catch (error) {
         console.error("Mood Log Error:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
     }
 };
 
