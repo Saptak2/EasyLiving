@@ -52,7 +52,20 @@ export default function ElderlyWellnessDashboard() {
     async function fetchLogs() {
         try {
             const res = await API.get("/api/logs/all");
-            setLogs(res.data.logs);
+            const fetchedLogs = res.data.logs;
+
+            setLogs(fetchedLogs);
+
+            // 🔥 CHECK IF ALREADY LOGGED TODAY
+            const today = new Date().toDateString();
+
+            const alreadyLogged = fetchedLogs.some(log =>
+                log.type === "mood" &&
+                new Date(log.createdAt).toDateString() === today
+            );
+
+            setHasLoggedToday(alreadyLogged);
+
         } catch (err) {
             console.error("❌ Error fetching logs:", err);
         }
