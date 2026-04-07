@@ -1,5 +1,6 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -9,12 +10,13 @@ import insightRoutes from "./routes/insightRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import caretakerRoutes from "./routes/caretakerRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js"
 
 
 
 
 
-dotenv.config();
+
 connectDB();
 
 const app = express();
@@ -29,6 +31,8 @@ app.use("/api/insights", insightRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/caretaker", caretakerRoutes);
+
+app.use("/api/ai", aiRoutes);
 
 
 const PORT = process.env.PORT || 5000;

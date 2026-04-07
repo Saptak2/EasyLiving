@@ -6,6 +6,7 @@ import RecentLogs from "./RecentLogs";
 import Navbar from "./Navbar";
 import TrendsModal from "./TrendsModal";
 import API from "../api/axiosConfig";
+import AICompanion from "./AICompanion";
 
 export default function ElderlyWellnessDashboard() {
     const userId = localStorage.getItem("userId");
@@ -277,6 +278,7 @@ export default function ElderlyWellnessDashboard() {
                         />
 
                         <div className="space-y-6">
+                            <AICompanion />
                             <Recommendations
                                 recommendations={recommendations}
                                 predictedMood={predictedMood}
