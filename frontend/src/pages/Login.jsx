@@ -15,9 +15,17 @@ export default function Login() {
             const res = await API.post("/api/auth/login", { email, password });
             localStorage.setItem("token", res.data.token);
             localStorage.setItem("userId", res.data.user.id);
+            localStorage.setItem("role", res.data.user.role);
 
             alert("✅ Login successful!");
-            navigate("/dashboard");
+
+            const role = res.data.user.role;
+
+            if (role === "caretaker") {
+                navigate("/caretaker-dashboard");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (err) {
             console.error(err);
             alert("❌ Invalid credentials or user not found.");
@@ -30,7 +38,7 @@ export default function Login() {
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex justify-center items-center px-4">
             <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
                 <h2 className="text-3xl font-semibold text-center text-green-700 mb-2">
-                    Welcome Back 
+                    Welcome Back
                 </h2>
                 <p className="text-center text-gray-500 mb-8">
                     Sign in to continue your wellness journey.

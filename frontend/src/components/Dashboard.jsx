@@ -117,6 +117,7 @@ export default function ElderlyWellnessDashboard() {
         e.preventDefault();
         try {
             if (formType === "mood") {
+
                 if (!sleepHours || !screenTime || !exerciseMinutes || !caffeineMg) {
                     alert("Please fill all mood input fields before submitting.");
                     return;
@@ -131,14 +132,39 @@ export default function ElderlyWellnessDashboard() {
                 });
 
                 const predicted = res.data.predicted_mood || "Unknown";
-                setPredictedMood(predicted);
 
-                if (res.data.recommendations && res.data.recommendations.length > 0) {
-                    setRecommendations(res.data.recommendations || []);
+                // 🔥 SAVE with safe handling
+                try {
+                    await API.post("/api/logs/mood/add", {
+                        moodNote,
+                        sleepHours: parseFloat(sleepHours),
+                        screenTimeHours: parseFloat(screenTime),
+                        exerciseMinutes: parseFloat(exerciseMinutes),
+                        caffeineMg: parseFloat(caffeineMg),
+                        predictedMood: predicted
+                    });
+
+                    alert(`✅ Mood log added! Predicted mood: ${predicted}`);
+                    setHasLoggedToday(true);
+
+                } catch (saveErr) {
+
+                    const msg = saveErr.response?.data?.message;
+
+                    if (msg === "You have already logged your mood today") {
+                        alert("⚠️ You have logged today");
+                        setHasLoggedToday(true);
+                    } else {
+                        throw saveErr;
+                    }
                 }
 
-                alert(`✅ Mood log added! Predicted mood: ${predicted}`);
-                setHasLoggedToday(true);
+                // 🔥 update UI
+                if (res.data.recommendations) {
+                    setRecommendations(res.data.recommendations);
+                }
+
+                await fetchLogs();
                 await fetchStats();
             }
             else if (formType === "expense") {

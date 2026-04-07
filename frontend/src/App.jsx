@@ -4,10 +4,19 @@ import Dashboard from "./components/Dashboard";
 import Profile from "./components/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import CaretakerDashboard from "./pages/CaretakerDashboard";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, roleRequired }) {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" replace />;
+  const role = localStorage.getItem("role");
+
+  if (!token) return <Navigate to="/login" replace />;
+
+  if (roleRequired && role !== roleRequired) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
 }
 
 export default function App() {
@@ -20,7 +29,7 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roleRequired="elderly">
               <Dashboard />
             </ProtectedRoute>
           }
@@ -30,6 +39,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/caretaker-dashboard"
+          element={
+            <ProtectedRoute roleRequired="caretaker">
+              <CaretakerDashboard />
             </ProtectedRoute>
           }
         />

@@ -23,7 +23,7 @@ export const addMoodLog = async (req, res) => {
             });
         }
 
-        const { moodNote, sleepHours, screenTimeHours, exerciseMinutes, caffeineMg } = req.body;
+        const { moodNote, sleepHours, screenTimeHours, exerciseMinutes, caffeineMg, predictedMood } = req.body;
 
         const log = new MoodLog({
             userId,
@@ -31,7 +31,8 @@ export const addMoodLog = async (req, res) => {
             sleepHours,
             screenTimeHours,
             exerciseMinutes,
-            caffeineMg
+            caffeineMg,
+            predictedMood   // 🔥 ADD THIS
         });
 
         await log.save();
