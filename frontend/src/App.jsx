@@ -5,6 +5,7 @@ import Profile from "./components/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CaretakerDashboard from "./pages/CaretakerDashboard";
+import CaretakerRegister from "./pages/CaretakerRegister";
 
 function ProtectedRoute({ children, roleRequired }) {
   const token = localStorage.getItem("token");
@@ -50,6 +51,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/register-caretaker" element={<CaretakerRegister />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -86,15 +86,23 @@ export default function Login() {
                 </div>
 
                 {/* Register Link */}
-                <p className="text-center text-sm text-gray-600">
-                    New to Wellness Support?{" "}
+                <div className="flex flex-col gap-2 mt-4">
+
                     <button
                         onClick={() => navigate("/register")}
-                        className="text-green-600 font-medium hover:underline"
+                        className="w-full border border-green-500 text-green-600 py-2 rounded-lg hover:bg-green-50 "
                     >
-                        Create an Account
+                        👴 Register as Elder
                     </button>
-                </p>
+
+                    <button
+                        onClick={() => navigate("/register-caretaker")}
+                        className="w-full border border-blue-500 text-blue-600 py-2 rounded-lg hover:bg-blue-50"
+                    >
+                        👨‍⚕️ Register as Caretaker
+                    </button>
+
+                </div>
             </div>
         </div>
     );
