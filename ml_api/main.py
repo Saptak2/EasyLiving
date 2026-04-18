@@ -30,6 +30,14 @@ except Exception as e:
     print("❌ Error loading mood model:", e)
     mood_model = None
 
+try:
+    kmeans = joblib.load("models/kmeans_model.pkl")
+    scaler = joblib.load("models/kmeans_scaler.pkl")
+    print("✅ KMeans model loaded")
+except Exception as e:
+    print("❌ Error loading KMeans:", e)
+    kmeans = None
+    scaler = None
 
 class MoodInput(BaseModel):
     sleepHours: float
@@ -38,7 +46,12 @@ class MoodInput(BaseModel):
     caffeineMg: float
     textInput: str
 
-
+class RecommendationInput(BaseModel):
+    sleep: float
+    screen: float
+    exercise: float
+    expense: float
+    activity_count: float
 
 @app.get("/")
 def home():
@@ -75,65 +88,83 @@ def predict_mood(data: MoodInput):
 
         mood = str(prediction).title()  # e.g., Happy, Neutral, Sad, Stressed
 
-        # Generate recommendations
-        if mood.lower() == "happy":
-            all_recs = [
-            "🎉 Keep doing what makes you happy!",
-            "💪 Stay active and share positivity with others.",
-            "🌿 Journal your positive thoughts daily.",
-            "😊 Help someone today.",
-            "🎯 Set a small goal and achieve it.",
-            "📸 Capture a happy moment today."
-            ]
-
-            recs = random.sample(all_recs, 3)
-        elif mood.lower() == "neutral":
-            all_recs = [
-            "🌞 Keep a steady routine of sleep and exercise.",
-            "📚 Try mindfulness or a hobby you enjoy.",
-            "☕ Watch caffeine and screen time balance.",
-            "🚶 Take a short walk to refresh your mind.",
-            "🎧 Listen to something relaxing.",
-            "🧘 Practice light stretching."
-            ]
-
-            recs = random.sample(all_recs, 3)
-        elif mood.lower() == "sad":
-            all_recs = [
-                "💖 Go for a relaxing walk or call a friend.",
-                "🧘 Try 10 mins of meditation or deep breathing.",
-                "🌿 Track habits regularly — small steps matter.",
-                "📞 Talk to someone you trust.",
-                "🎵 Listen to calming music.",
-                "🚶 Take a short walk outside.",
-                "📝 Write down your feelings in a journal."
-            ]
-
-            recs = random.sample(all_recs, 3)
-        elif mood.lower() == "stressed":
-            all_recs = [
-                "😌 Take short breaks to relax your mind.",
-                "🎧 Listen to calming music or nature sounds.",
-                "🕯️ Try gentle yoga or a warm bath before bed.",
-                "🌿 Practice deep breathing for 5 minutes.",
-                "📵 Reduce screen time for a while.",
-                "☕ Avoid too much caffeine today."
-            ]
-
-            recs = random.sample(all_recs, 3)
-        else:
-            recs = ["🌈 Stay mindful and keep tracking your moods daily."]
-
         return {
             "predicted_mood": mood,
-            "confidence": round(confidence, 3),
-            "recommendations": recs
+            "confidence": round(confidence, 3)
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
+@app.post("/recommend")
+def recommend(data: RecommendationInput):
+    if kmeans is None or scaler is None:
+        raise HTTPException(status_code=503, detail="KMeans model not loaded")
 
+    try:
+        # 🔥 CREATE SAME SCORE (VERY IMPORTANT)
+
+        sleep_n = data.sleep / 8
+        screen_n = 1 - (data.screen / 12)
+        exercise_n = data.exercise / 45
+        expense_n = 1 - (data.expense / 50000)
+        activity_n = data.activity_count / 5
+
+        score = (
+            0.3 * sleep_n +
+            0.2 * exercise_n +
+            0.2 * activity_n +
+            0.15 * screen_n +
+            0.15 * expense_n
+        )
+
+        features = np.array([[score]])
+
+        scaled = scaler.transform(features)
+
+        #weights = [4, 1, 3, 1, 2]
+        #scaled = scaled * weights
+        cluster = int(kmeans.predict(scaled)[0])
+
+        # cluster-based recommendation
+        if cluster == 0:
+            suggestion = "Healthy lifestyle. Keep it up."
+        elif cluster == 1:
+            suggestion = "Moderate lifestyle. Improve daily habits."
+        elif cluster == 2:
+            suggestion = "Low lifestyle: poor routine detected."
+
+        issues = []
+
+        if data.sleep < 4:
+            issues.append("⚠️ Low sleep")
+
+        if data.exercise < 15:
+            issues.append("⚠️ Low physical activity")
+
+        if data.screen > 8:
+            issues.append("⚠️ High screen time")
+
+        if data.expense > 15000:
+            issues.append("⚠️ High spending")
+
+        if data.activity_count == 0:
+            issues.append("⚠️ No daily activity")
+
+        # If no issues
+        if len(issues) == 0:
+            issues.append("✅ No major issues detected")
+
+        
+        return {
+            "cluster": cluster,
+            "lifestyle_score": round(float(score), 3),
+            "lifestyle_recommendation": suggestion,
+            "issues_detected": issues   # 🔥 NEW FIELD
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
