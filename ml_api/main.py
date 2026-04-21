@@ -51,7 +51,12 @@ class RecommendationInput(BaseModel):
     screen: float
     exercise: float
     expense: float
-    activity_count: float
+    activity_duration: float
+    avg_expense: float
+    user_sleep: float
+    user_exercise: float   # ✅ NEW
+    user_screen: float     # ✅ NEW
+    user_activity: float
 
 @app.get("/")
 def home():
@@ -103,12 +108,18 @@ def recommend(data: RecommendationInput):
 
     try:
         # 🔥 CREATE SAME SCORE (VERY IMPORTANT)
+        sleep_n = data.sleep / data.user_sleep if data.user_sleep > 0 else 0
+        screen_n = 1 - (data.screen / data.user_screen) if data.user_screen > 0 else 0
+        exercise_n = data.exercise / data.user_exercise if data.user_exercise > 0 else 0
+        activity_n = data.activity_duration / data.user_activity if data.user_activity > 0 else 0
+       
+        #expense_n = 1 - (data.expense / data.avg_expense)
+        if data.avg_expense > 0:
+            expense_n = 1 - (data.expense / data.avg_expense)
+        else:
+            expense_n = 0
+        #activity_n = data.activity_count / 5
 
-        sleep_n = data.sleep / 8
-        screen_n = 1 - (data.screen / 12)
-        exercise_n = data.exercise / 45
-        expense_n = 1 - (data.expense / 50000)
-        activity_n = data.activity_count / 5
 
         score = (
             0.3 * sleep_n +
@@ -118,8 +129,25 @@ def recommend(data: RecommendationInput):
             0.15 * expense_n
         )
 
-        features = np.array([[score]])
+        print("------ DEBUG ------")
+        print("Expense (7 days):", data.expense)
+        print("User avg expense:", data.avg_expense)
+        print("Calculated expense_n:", expense_n)
+        print("Final score:", score)
+        print("-------------------")
+        expense_scaled = data.expense / 1000
 
+        features = np.array([[
+            data.sleep,
+            data.screen,
+            data.exercise,
+            expense_scaled,
+            data.activity_duration
+        ]])
+
+        #features = features.astype(float)
+
+        #features = np.array([[score]])
         scaled = scaler.transform(features)
 
         #weights = [4, 1, 3, 1, 2]
@@ -139,17 +167,23 @@ def recommend(data: RecommendationInput):
         if data.sleep < 4:
             issues.append("⚠️ Low sleep")
 
-        if data.exercise < 15:
-            issues.append("⚠️ Low physical activity")
+        if data.exercise < data.user_exercise *0.7:
+            issues.append("⚠️  Lower activity than your usual routine")
 
-        if data.screen > 8:
-            issues.append("⚠️ High screen time")
+        if data.screen > data.user_screen:
+            issues.append("⚠️ Higher screen time than your normal usage")
 
-        if data.expense > 15000:
-            issues.append("⚠️ High spending")
+        if data.expense > data.avg_expense:
+            issues.append("⚠️ High spending compared to your usual pattern")
 
-        if data.activity_count == 0:
-            issues.append("⚠️ No daily activity")
+        #if data.activity_count == 0:
+         #   issues.append("⚠️ No daily activity")
+
+        if data.activity_duration < 15:
+            issues.append("⚠️ Very low activity duration")
+
+        elif data.activity_duration > 30:
+            issues.append("✅ Good physical activity level")
 
         # If no issues
         if len(issues) == 0:

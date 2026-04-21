@@ -6,43 +6,31 @@ import joblib
 # Load data
 df = pd.read_csv("data/kmeans_training.csv")
 
+# ✅ SCALE EXPENSE (IMPORTANT - avoid dominance)
 df["expense"] = df["expense"] / 1000
 
-df["sleep_n"] = df["sleep"] / 8
-df["screen_n"] = 1 - (df["screen"] / 12)
-df["exercise_n"] = df["exercise"] / 45
-df["expense_n"] = 1 - (df["expense"] / 50000)
-df["activity_n"] = df["activity_count"] / 5
+# ✅ SELECT REAL FEATURES (NO SCORE)
+X = df[["sleep", "screen", "exercise", "expense", "activity_duration"]]
 
-# 🔥 CREATE LIFESTYLE SCORE
-df["lifestyle_score"] = (
-    0.3 * df["sleep_n"] +
-    0.2 * df["exercise_n"] +
-    0.2 * df["activity_n"] +
-    0.15 * df["screen_n"] +
-    0.15 * df["expense_n"]
-)
-
-# 🔥 USE ONLY SCORE
-X = df[["lifestyle_score"]]
-
-# Scale
+# ✅ SCALE FEATURES
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-
-
-# Train model
-kmeans = KMeans(n_clusters=3, random_state=42)
+# ✅ TRAIN MODEL
+kmeans = KMeans(n_clusters=3, random_state=42,n_init=10)
 kmeans.fit(X_scaled)
 
-# Print cluster centers (original scale)
+# ✅ PRINT CLUSTER CENTERS (ORIGINAL SCALE)
 centers = scaler.inverse_transform(kmeans.cluster_centers_)
 
 print("\nCluster Centers (original values):")
-print(centers)
+print(pd.DataFrame(centers, columns=X.columns))
 
-# Save
+print("\nCluster meaning hint:")
+for i, row in enumerate(centers):
+    print(f"Cluster {i} →", row)
+
+# ✅ SAVE MODEL
 joblib.dump(kmeans, "models/kmeans_model.pkl")
 joblib.dump(scaler, "models/kmeans_scaler.pkl")
 
