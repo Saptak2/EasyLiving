@@ -13,7 +13,8 @@ export default function ElderlyWellnessDashboard() {
 
     const [logs, setLogs] = useState([]);
     const [stats, setStats] = useState(null);
-    const [recommendations, setRecommendations] = useState([]);
+    // const [recommendations, setRecommendations] = useState([]);
+    const [recommendationData, setRecommendationData] = useState(null);
 
     const [formType, setFormType] = useState("mood");
 
@@ -83,10 +84,15 @@ export default function ElderlyWellnessDashboard() {
 
     async function fetchRecommendations() {
         try {
-            const res = await API.get("/api/insights/recommendations");
-            setRecommendations(res.data.recommendations || []);
-        } catch {
-            setRecommendations([]);
+            const res = await API.post("/api/recommend", {
+                userId
+            });
+
+            setRecommendationData(res.data.data);
+
+        } catch (err) {
+            console.error("Recommendation error:", err);
+            setRecommendationData(null);
         }
     }
 
@@ -147,6 +153,7 @@ export default function ElderlyWellnessDashboard() {
 
                     alert(`✅ Mood log added! Predicted mood: ${predicted}`);
                     setHasLoggedToday(true);
+                    await fetchRecommendations();
 
                 } catch (saveErr) {
 
@@ -161,9 +168,9 @@ export default function ElderlyWellnessDashboard() {
                 }
 
                 // 🔥 update UI
-                if (res.data.recommendations) {
-                    setRecommendations(res.data.recommendations);
-                }
+                // if (res.data.recommendations) {
+                //     setRecommendations(res.data.recommendations);
+                // }
 
                 await fetchLogs();
                 await fetchStats();
@@ -280,7 +287,7 @@ export default function ElderlyWellnessDashboard() {
                         <div className="space-y-6">
                             <AICompanion />
                             <Recommendations
-                                recommendations={recommendations}
+                                recommendationData={recommendationData}
                                 predictedMood={predictedMood}
                             />
                             <RecentLogs logs={logs} removeLog={removeLog} />

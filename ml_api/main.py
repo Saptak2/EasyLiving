@@ -103,103 +103,86 @@ def predict_mood(data: MoodInput):
 
 @app.post("/recommend")
 def recommend(data: RecommendationInput):
-    if kmeans is None or scaler is None:
-        raise HTTPException(status_code=503, detail="KMeans model not loaded")
 
-    try:
-        # 🔥 CREATE SAME SCORE (VERY IMPORTANT)
-        sleep_n = data.sleep / data.user_sleep if data.user_sleep > 0 else 0
-        screen_n = 1 - (data.screen / data.user_screen) if data.user_screen > 0 else 0
-        exercise_n = data.exercise / data.user_exercise if data.user_exercise > 0 else 0
-        activity_n = data.activity_duration / data.user_activity if data.user_activity > 0 else 0
-       
-        #expense_n = 1 - (data.expense / data.avg_expense)
-        if data.avg_expense > 0:
-            expense_n = 1 - (data.expense / data.avg_expense)
-        else:
-            expense_n = 0
-        #activity_n = data.activity_count / 5
+    import numpy as np
 
+    # ===============================
+    # 🔥 SAFE NORMALIZATION
+    # ===============================
 
-        score = (
-            0.3 * sleep_n +
-            0.2 * exercise_n +
-            0.2 * activity_n +
-            0.15 * screen_n +
-            0.15 * expense_n
-        )
+    sleep_n = min(data.sleep / (data.user_sleep + 1), 1)
 
-        print("------ DEBUG ------")
-        print("Expense (7 days):", data.expense)
-        print("User avg expense:", data.avg_expense)
-        print("Calculated expense_n:", expense_n)
-        print("Final score:", score)
-        print("-------------------")
-        expense_scaled = data.expense / 1000
+    screen_n = max(0, 1 - (data.screen / (data.user_screen + 1)))
 
-        features = np.array([[
-            data.sleep,
-            data.screen,
-            data.exercise,
-            expense_scaled,
-            data.activity_duration
-        ]])
+    exercise_n = min(data.exercise / (data.user_exercise + 1), 1)
 
-        #features = features.astype(float)
+    activity_n = min(data.activity_duration / (data.user_activity + 1), 1)
 
-        #features = np.array([[score]])
-        scaled = scaler.transform(features)
+    expense_n = max(0, 1 - (data.expense / (data.avg_expense + 1)))
 
-        #weights = [4, 1, 3, 1, 2]
-        #scaled = scaled * weights
-        cluster = int(kmeans.predict(scaled)[0])
+    # ===============================
+    # 🔥 LIFESTYLE SCORE (REALISTIC)
+    # ===============================
 
-        # cluster-based recommendation
-        if cluster == 0:
-            suggestion = "Healthy lifestyle. Keep it up."
-        elif cluster == 1:
-            suggestion = "Moderate lifestyle. Improve daily habits."
-        elif cluster == 2:
-            suggestion = "Low lifestyle: poor routine detected."
+    score = (
+        0.35 * sleep_n +
+        0.25 * exercise_n +
+        0.15 * activity_n +
+        0.15 * screen_n +
+        0.10 * expense_n
+    )
 
-        issues = []
+    # ===============================
+    # 🔥 HUMAN-LIKE RECOMMENDATION
+    # ===============================
 
-        if data.sleep < 4:
-            issues.append("⚠️ Low sleep")
+    if score > 0.75:
+        suggestion = "Great lifestyle! You are maintaining healthy habits. Keep it up and stay consistent."
+    elif score > 0.5:
+        suggestion = "Your lifestyle is moderate. You are doing okay, but small improvements in daily habits can make it better."
+    else:
+        suggestion = "Your lifestyle needs improvement. Try focusing on sleep, physical activity, and reducing screen time."
 
-        if data.exercise < data.user_exercise *0.7:
-            issues.append("⚠️  Lower activity than your usual routine")
+    # ===============================
+    # 🔥 ISSUE DETECTION (REALISTIC)
+    # ===============================
 
-        if data.screen > data.user_screen:
-            issues.append("⚠️ Higher screen time than your normal usage")
+    issues = []
 
-        if data.expense > data.avg_expense:
-            issues.append("⚠️ High spending compared to your usual pattern")
+    if data.sleep < 5:
+        issues.append("⚠️ You are not getting enough sleep")
 
-        #if data.activity_count == 0:
-         #   issues.append("⚠️ No daily activity")
+    if data.exercise < data.user_exercise * 0.7:
+        issues.append("⚠️ You are less active than your usual routine")
 
-        if data.activity_duration < 15:
-            issues.append("⚠️ Very low activity duration")
+    if data.screen > data.user_screen:
+        issues.append("⚠️ Your screen time is higher than usual")
 
-        elif data.activity_duration > 30:
-            issues.append("✅ Good physical activity level")
+    if data.expense > data.avg_expense:
+        issues.append("⚠️ Your spending is higher than your average")
 
-        # If no issues
-        if len(issues) == 0:
-            issues.append("✅ No major issues detected")
+    if data.activity_duration < 15:
+        issues.append("⚠️ Very low physical activity today")
 
-        
-        return {
-            "cluster": cluster,
-            "lifestyle_score": round(float(score), 3),
-            "lifestyle_recommendation": suggestion,
-            "issues_detected": issues   # 🔥 NEW FIELD
-        }
+    elif data.activity_duration > 30:
+        issues.append("✅ Good physical activity today")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # ===============================
+    # 🔥 DEFAULT MESSAGE
+    # ===============================
 
+    if not issues:
+        issues.append("✅ Your habits look balanced today")
+
+    # ===============================
+    # 🔥 FINAL RESPONSE
+    # ===============================
+
+    return {
+        "lifestyle_score": round(float(score), 2),
+        "lifestyle_recommendation": suggestion,
+        "issues_detected": issues
+    }
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

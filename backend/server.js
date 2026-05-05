@@ -36,6 +36,7 @@ app.use("/api/caretaker", caretakerRoutes);
 app.use("/api/ai", aiRoutes);
 
 app.use("/api/ml", recommendationRoutes);
+app.use("/api", recommendationRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
