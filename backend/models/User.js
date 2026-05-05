@@ -52,11 +52,12 @@ const userSchema = new mongoose.Schema(
         },
 
         // 🔥 Link elderly to caretaker
-        caretakerId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            default: null
-        },
+        caretakerIds: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
     },
 
     { timestamps: true }

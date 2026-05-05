@@ -4,33 +4,36 @@ import Alert from "../models/Alert.js";
 
 export const addElderly = async (req, res) => {
     try {
-        const caretakerId = req.user._id;   // logged-in caretaker
+        const caretakerId = req.user._id;
         const { email } = req.body;
 
-        // 🔍 find elderly
         const elderly = await User.findOne({ email });
 
         if (!elderly) {
             return res.status(404).json({ message: "Elderly user not found" });
         }
 
-        // ❌ cannot add caretaker
         if (elderly.role === "caretaker") {
             return res.status(400).json({ message: "Cannot add a caretaker" });
         }
 
-        // ❌ already assigned
-        if (elderly.caretakerId) {
-            return res.status(400).json({ message: "Already assigned to a caretaker" });
+        // 🔥 ensure array exists
+        if (!elderly.caretakerIds) {
+            elderly.caretakerIds = [];
         }
 
-        // 🔥 link
-        elderly.caretakerId = caretakerId;
+        // 🔥 prevent duplicate
+        const alreadyAdded = elderly.caretakerIds.some(
+            id => id.toString() === caretakerId.toString()
+        );
+
+        if (!alreadyAdded) {
+            elderly.caretakerIds.push(caretakerId);
+        }
+
         await elderly.save();
 
-        res.json({
-            message: "Elderly linked successfully"
-        });
+        res.json({ message: "Elderly linked successfully" });
 
     } catch (err) {
         console.error("Add elderly error:", err);
@@ -38,12 +41,11 @@ export const addElderly = async (req, res) => {
     }
 };
 
-
 export const getMyElderly = async (req, res) => {
     try {
         const caretakerId = req.user._id;
 
-        const users = await User.find({ caretakerId });
+        const users = await User.find({ caretakerIds: caretakerId });
 
         const result = [];
 
