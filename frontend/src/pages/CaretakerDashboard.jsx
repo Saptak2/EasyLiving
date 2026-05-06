@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../api/axiosConfig";
 import Navbar from "../components/Navbar";
 import HistoryGraphModal from "../components/HistoryGraphModal";
+import CaretakerAI from "../components/CaretakerAI";
 
 export default function CaretakerDashboard() {
     const [email, setEmail] = useState("");
@@ -101,6 +102,7 @@ export default function CaretakerDashboard() {
                         ➕ Add Elderly User
                     </h2>
 
+
                     <div className="flex gap-2">
                         <input
                             type="email"
@@ -117,6 +119,7 @@ export default function CaretakerDashboard() {
                         </button>
                     </div>
                 </div>
+                <CaretakerAI />
 
                 {/* 🔥 ELDER CARDS */}
                 <div className="mb-8">
