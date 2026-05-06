@@ -1,4 +1,6 @@
+from urllib import request
 
+from bson import ObjectId
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -6,6 +8,18 @@ import joblib
 import pandas as pd
 import numpy as np
 import random
+from anomaly_model import build_history_matrix, detect_anomaly, aggregate_daily_features
+from utils import get_last_n_days_dates, fetch_mood_logs, fetch_expense_logs, fetch_activity_logs
+
+from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+# MongoDB connection setup
+load_dotenv(override=True)
+load_dotenv()
+MONGO_URI = os.getenv("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client[os.getenv("DB_NAME")]
 
 
 app = FastAPI(
@@ -57,6 +71,10 @@ class RecommendationInput(BaseModel):
     user_exercise: float   # ✅ NEW
     user_screen: float     # ✅ NEW
     user_activity: float
+
+class AnomalyRequest(BaseModel):
+    user_id: str
+    date: str  # format: YYYY-MM-DD
 
 @app.get("/")
 def home():
@@ -183,6 +201,50 @@ def recommend(data: RecommendationInput):
         "lifestyle_recommendation": suggestion,
         "issues_detected": issues
     }
+
+
+# FEATURE_NAMES for reference:
+# ["sleep_hours", "screen_time", "exercise_duration", "caffeine_intake",
+#  "total_expense", "food_expense", "transport_expense", "medical_expense",
+#  "personal_expense", "total_activity_duration", "avg_mood_score"]
+@app.post("/detect/anomaly")
+def detect_user_anomaly(request: AnomalyRequest):
+    try:
+        # Step 1: Get last 7 days of dates
+        dates = get_last_n_days_dates(n=7)
+
+        # Step 2: Fetch all 3 log types from MongoDB
+        mood_logs = fetch_mood_logs(db, request.user_id, dates)
+        expense_logs = fetch_expense_logs(db, request.user_id, dates)
+        activity_logs = fetch_activity_logs(db, request.user_id, dates)
+
+        # Step 3: Build history matrix using all 7 dates
+        history_matrix = build_history_matrix(mood_logs, expense_logs, activity_logs, dates)
+
+        # Step 4: Get today's feature vector for the specific date
+        today_vector = aggregate_daily_features(mood_logs, expense_logs, activity_logs, request.date)
+
+        # Step 5: Call detect_anomaly
+        result = detect_anomaly(history_matrix, today_vector)
+
+        # Step 6: Add user_id and date to the result
+        result["user_id"] = request.user_id
+        result["date"] = request.date
+
+
+        #debug prints
+        from bson import ObjectId
+        print("converted userId:", ObjectId(request.user_id))
+        print("mood logs fetched:", len(mood_logs))
+        print("expense logs fetched:", len(expense_logs))
+        print("activity logs fetched:", len(activity_logs))
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

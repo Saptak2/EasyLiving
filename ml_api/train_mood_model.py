@@ -1,5 +1,3 @@
-
-
 import os
 import pandas as pd
 import numpy as np
@@ -76,6 +74,11 @@ preprocessor = ColumnTransformer([
 ])
 
 clf = LogisticRegression(max_iter=1000, solver="saga", class_weight="balanced")
+'''
+this in not just logistic regrssion, this is multinomial logistic regression,
+which is a generalization of logistic regression for multi-class classification problems.
+The "saga" solver is used for optimization, and "class_weight='balanced'" helps to handle class imbalance by assigning weights inversely proportional to class frequencies.
+'''
 
 pipe = Pipeline([
     ("preprocess", preprocessor),
