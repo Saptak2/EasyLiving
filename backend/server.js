@@ -12,7 +12,7 @@ import alertRoutes from "./routes/alertRoutes.js";
 import caretakerRoutes from "./routes/caretakerRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js"
 import recommendationRoutes from "./routes/recommendationRoutes.js";
-
+const anomalyRoutes = require('./routes/anomaly');
 
 
 
@@ -37,6 +37,8 @@ app.use("/api/ai", aiRoutes);
 
 app.use("/api/ml", recommendationRoutes);
 app.use("/api", recommendationRoutes);
+
+app.use('/api/anomaly', anomalyRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
