@@ -1,24 +1,61 @@
 import React, { useEffect, useState } from "react";
 import API from "../api/axiosConfig";
 import Navbar from "../components/Navbar";
+import HistoryGraphModal from "../components/HistoryGraphModal";
 
 export default function CaretakerDashboard() {
     const [email, setEmail] = useState("");
     const [elderlyList, setElderlyList] = useState([]);
     const [alerts, setAlerts] = useState([]);
+    const [historyData, setHistoryData] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [historyDays, setHistoryDays] = useState(7);
+    const [showGraph, setShowGraph] = useState(false);
+    const [selectedUserName, setSelectedUserName] = useState("");
+
 
     useEffect(() => {
         fetchElderly();
-        fetchAlerts();
     }, []);
 
     // 🔥 Get elderly users
     const fetchElderly = async () => {
         try {
             const res = await API.get("/api/caretaker/my-elderly");
-            setElderlyList(res.data);
+            const sorted = res.data.sort((a, b) => {
+                const scoreA = a.lifestyle_score ?? 1; // null → best
+                const scoreB = b.lifestyle_score ?? 1;
+
+                return scoreA - scoreB; // lowest first
+            });
+
+            setElderlyList(sorted);
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const fetchHistory = async (userId, days, userName) => {
+        try {
+            const res = await API.get(
+                `/api/caretaker/history?userId=${userId}&days=${days}`
+            );
+
+            const formatted = res.data.map((item) => ({
+                date: new Date(item.date).toLocaleDateString(),
+                sleep: item.sleep,
+                screen: item.screen,
+                exercise: item.exercise
+            }));
+
+            setHistoryData(formatted);
+            setSelectedUser(userId);
+            setHistoryDays(days);
+            setSelectedUserName(userName);
+            setShowGraph(true);
+
+        } catch (err) {
+            console.error("History fetch error:", err);
         }
     };
 
@@ -35,13 +72,19 @@ export default function CaretakerDashboard() {
     };
 
     // 🔥 Get alerts
-    const fetchAlerts = async () => {
-        try {
-            const res = await API.get("/api/alerts/caretaker");
-            setAlerts(res.data || []);
-        } catch (err) {
-            console.error(err);
-        }
+    // const fetchAlerts = async () => {
+    //     try {
+    //         const res = await API.get("/api/alerts/caretaker");
+    //         setAlerts(res.data || []);
+    //     } catch (err) {
+    //         console.error(err);
+    //     }
+    // };
+    const getStatus = (score) => {
+        if (!score) return "No Data";
+        if (score > 0.7) return "Good";
+        if (score > 0.4) return "Moderate";
+        return "Needs Attention";
     };
 
     return (
@@ -88,73 +131,115 @@ export default function CaretakerDashboard() {
                             {elderlyList.map((user) => (
                                 <div
                                     key={user._id}
-                                    className="p-4 border rounded-lg shadow-md bg-white"
+                                    className="bg-white rounded-2xl shadow-lg p-5 border hover:shadow-xl transition duration-300"
                                 >
-                                    <h3 className="text-lg font-semibold">
-                                        {user.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-500">
-                                        {user.email}
+
+                                    {/* HEADER */}
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800">
+                                                {user.name || "Unnamed User"}
+                                            </h3>
+                                            <p className="text-sm text-gray-500">{user.email}</p>
+                                        </div>
+
+                                        {/* STATUS BADGE */}
+                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold 
+            ${user.lifestyle_score > 0.7
+                                                ? "bg-green-100 text-green-700"
+                                                : user.lifestyle_score > 0.4
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-red-100 text-red-700"
+                                            }`}>
+                                            {getStatus(user.lifestyle_score)}
+                                        </span>
+                                    </div>
+
+                                    {/* DIVIDER */}
+                                    <hr className="my-3" />
+
+                                    {/* SCORE */}
+                                    <div className="flex justify-between items-center mb-3">
+                                        <p className="text-sm text-gray-600">Lifestyle Score</p>
+                                        <p className={`text-lg font-bold 
+            ${user.lifestyle_score > 0.7
+                                                ? "text-green-600"
+                                                : user.lifestyle_score > 0.4
+                                                    ? "text-orange-500"
+                                                    : "text-red-500"
+                                            }`}>
+                                            {user.lifestyle_score || "N/A"}
+                                        </p>
+                                    </div>
+
+                                    {/* MOOD */}
+                                    <p className="text-sm mb-3">
+                                        🧠 <strong>Mood:</strong>{" "}
+                                        <span className="text-blue-600">{user.mood}</span>
                                     </p>
 
-                                    <div className="mt-2">
-                                        <p>
-                                            <strong>Today Mood:</strong>{" "}
-                                            <span className="text-blue-600">
-                                                {user.mood || "No Data"}
-                                            </span>
+                                    {/* ISSUES */}
+                                    <div className="mb-3">
+                                        <p className="text-sm font-semibold text-gray-700 mb-1">
+                                            ⚠️ Issues
                                         </p>
+                                        <ul className="text-sm space-y-1">
+                                            {(user.issues_detected || []).length > 0 ? (
+                                                user.issues_detected.map((i, idx) => (
+                                                    <li key={idx} className="text-red-600">
+                                                        • {i}
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="text-green-600">• No issues</li>
+                                            )}
+                                        </ul>
                                     </div>
 
-                                    <div className="mt-2">
-                                        <p>
-                                            <strong>Alert:</strong>{" "}
-                                            {user.alert ? (
-                                                <span className="text-red-600 font-semibold">
-                                                    {user.alert}
-                                                </span>
-                                            ) : (
-                                                <span className="text-green-600">
-                                                    No Alert
-                                                </span>
-                                            )}
-                                        </p>
+                                    {/* HEALTH STATS */}
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <p>💤 Sleep: {user.sleepHours}h</p>
+                                        <p>📱 Screen: {user.screenTimeHours}h</p>
+                                        <p>🏃 Exercise: {user.exerciseMinutes}m</p>
+                                        <p>🚶 Activity: {user.activityDuration}m</p>
                                     </div>
+
+                                    {/* EXPENSE */}
+                                    <div className="mt-3 text-sm font-medium">
+                                        💰 Expense: ₹{user.todayExpense}
+                                    </div>
+                                    <div className="flex gap-2 mt-4">
+                                        <button
+                                            onClick={() => fetchHistory(user._id, 7, user.name)}
+                                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
+                                        >
+                                            📊 7 Days
+                                        </button>
+
+                                        <button
+                                            onClick={() => fetchHistory(user._id, 30, user.name)}
+                                            className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
+                                        >
+                                            📈 30 Days
+                                        </button>
+                                    </div>
+
+
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {/* 🔥 ALERTS SECTION */}
-                <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        🚨 Alerts
-                    </h2>
 
-                    {alerts.length === 0 ? (
-                        <p className="text-gray-500">No alerts today ✅</p>
-                    ) : (
-                        alerts.map((alert, index) => (
-                            <div
-                                key={index}
-                                className={`p-4 mb-3 rounded-md text-white ${alert.type === "CRITICAL"
-                                    ? "bg-red-500"
-                                    : "bg-orange-400"
-                                    }`}
-                            >
-                                <h3 className="font-semibold">
-                                    {alert.type} ALERT
-                                </h3>
-                                <p>{alert.message}</p>
-                                <p className="text-sm">
-                                    👤 {alert.userId?.name}
-                                </p>
-                            </div>
-                        ))
-                    )}
-                </div>
             </div>
+            <HistoryGraphModal
+                isOpen={showGraph}
+                onClose={() => setShowGraph(false)}
+                historyData={historyData}
+                days={historyDays}
+                elderName={selectedUserName}
+            />
         </div>
     );
 }
